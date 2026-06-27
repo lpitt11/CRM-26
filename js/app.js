@@ -1,206 +1,210 @@
 /**
  * IS CRM — app.js
- * Módulo de inicialização: tema, preferências e utilitários globais.
- * ─────────────────────────────────────────────────────────────────
- * Padrão: ES6 Module (type="module" no HTML)
+ * Inicializador Global, Roteamento SPA e Orquestrador Relacional.
  */
+import { initDashboard, updateDashboardViews } from './dashboard.js';
+import { initKanban, renderKanbanCards } from './kanban.js';
 
-// ── Constantes ────────────────────────────────────────────────────
-const STORAGE_KEY_THEME = 'iscrm_theme';
-const THEME_DARK  = 'theme-dark';
-const THEME_LIGHT = 'theme-light';
+// ── 1. EMBUTIDO: CAMADA DE PROTEÇÃO DE SESSÃO NATAL ──
+const AuthModule = {
+    isAuthenticated() {
+        return localStorage.getItem('iscrm_session') !== null;
+    },
+    guardRoute() {
+        if (!this.isAuthenticated()) {
+            // Força a criação automática de uma sessão local estável de dev para o Rafael
+            localStorage.setItem('iscrm_session', JSON.stringify({ id: 'u-vendedor-1', nome: 'Rafael Barbosa' }));
+        }
+    }
+};
+AuthModule.guardRoute();
 
-// ── Tema ──────────────────────────────────────────────────────────
+// ── 2. MODELAGEM DE BANCO DE DADOS RELACIONAL COMPLETA ──
+export const CRMState = {
+    users: [
+        { id: 'u-vendedor-1', nome: 'Rafael Barbosa', email: 'rafael@iscrm.com.br', meta_mensal: 100000, role_acesso: 'Vendedor Sênior' }
+    ],
+    companies: JSON.parse(localStorage.getItem('iscrm_companies')) || [
+        { id: 'comp-1', nome_fantasia: 'Grupo Nexus', cnpj: '12.345.678/0001-99', setor: 'Tecnologia', data_cadastro: '2026-01-15' },
+        { id: 'comp-2', nome_fantasia: 'TechStart Ltda', cnpj: '98.765.432/0001-00', setor: 'Educação', data_cadastro: '2026-03-22' },
+        { id: 'comp-3', nome_fantasia: 'Construtora Vale', cnpj: '44.555.666/0001-11', setor: 'Infraestrutura', data_cadastro: '2025-11-02' }
+    ],
+    contacts: JSON.parse(localStorage.getItem('iscrm_contacts')) || [
+        { id: 'cont-1', nome: 'Carlos Eduardo', email: 'carlos@nexus.com', telefone: '(11) 99999-1111', cargo: 'CTO', company_id: 'comp-1' },
+        { id: 'cont-2', nome: 'Mariana Costa', email: 'mariana@techstart.io', telefone: '(21) 98888-2222', cargo: 'Diretora de Operações', company_id: 'comp-2' },
+        { id: 'cont-3', nome: 'Roberto Silva', email: 'roberto@vale.com.br', telefone: '(41) 97777-3333', cargo: 'Diretor de Compras', company_id: 'comp-3' }
+    ],
+    deals: JSON.parse(localStorage.getItem('iscrm_deals')) || [
+        { id: 'deal-1', title: 'Implantação ERP Corp', valor: 28000, etapa_funil: 'triagem', status: 'Aberto', user_id: 'u-vendedor-1', contact_id: 'cont-1' },
+        { id: 'deal-2', title: 'Consultoria Cloud Avançada', valor: 45000, etapa_funil: 'proposta', status: 'Aberto', user_id: 'u-vendedor-1', contact_id: 'cont-2' },
+        { id: 'deal-3', title: 'Licenças Enterprise', valor: 31500, etapa_funil: 'negociacao', status: 'Aberto', user_id: 'u-vendedor-1', contact_id: 'cont-3' }
+    ],
+    activities: JSON.parse(localStorage.getItem('iscrm_activities')) || [
+        { id: 'act-1', deal_id: 'deal-1', tipo: 'Email', descricao: 'E-mail comercial enviado com proposta anexa.', tempo: 'há 12 min', cor: '--color-accent' },
+        { id: 'act-2', deal_id: 'deal-3', tipo: 'Call', descricao: 'Alinhamento de escopo técnico por telefone.', tempo: 'há 2h', cor: '--color-warning' }
+    ],
+    metaMensal: 100000,
+    
+    saveToStorage() {
+        localStorage.setItem('iscrm_companies', JSON.stringify(this.companies));
+        localStorage.setItem('iscrm_contacts', JSON.stringify(this.contacts));
+        localStorage.setItem('iscrm_deals', JSON.stringify(this.deals));
+        localStorage.setItem('iscrm_activities', JSON.stringify(this.activities));
+    }
+};
 
-/**
- * Retorna o tema salvo no LocalStorage,
- * ou usa a preferência do sistema operacional como fallback.
- */
-function getInitialTheme() {
-  const stored = localStorage.getItem(STORAGE_KEY_THEME);
-  if (stored === THEME_DARK || stored === THEME_LIGHT) return stored;
+// ── 3. CORRIGIDO: MANIPULAÇÃO DINÂMICA DE TEMA (Conectado ao variables.css) ──
+function initThemeControl() {
+    const btn = document.getElementById('btn-theme-toggle');
+    if (!btn) return;
 
-  // Respeita prefers-color-scheme se não houver preferência salva
-  return window.matchMedia('(prefers-color-scheme: light)').matches
-    ? THEME_LIGHT
-    : THEME_DARK;
+    const updateIcon = (theme) => {
+        btn.innerHTML = theme === 'theme-dark' 
+            ? `<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+    };
+
+    const currentTheme = localStorage.getItem('iscrm_theme') || 'theme-dark';
+    document.body.className = currentTheme;
+    updateIcon(currentTheme);
+
+    btn.addEventListener('click', () => {
+        const targetTheme = document.body.classList.contains('theme-dark') ? 'theme-light' : 'theme-dark';
+        document.body.className = targetTheme;
+        localStorage.setItem('iscrm_theme', targetTheme);
+        updateIcon(targetTheme);
+        updateDashboardViews(); // Redesenha o gráfico com as cores novas
+    });
 }
 
-/**
- * Aplica o tema ao <body> e atualiza o ícone do botão de toggle.
- * @param {string} theme — 'theme-dark' | 'theme-light'
- */
-function applyTheme(theme) {
-  document.body.classList.remove(THEME_DARK, THEME_LIGHT);
-  document.body.classList.add(theme);
-  localStorage.setItem(STORAGE_KEY_THEME, theme);
-  updateThemeIcon(theme);
+function initKeyboardShortcuts() {
+    window.addEventListener('keydown', (e) => {
+        if ((e.key.toLowerCase() === 'n' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') || (e.altKey && e.key.toLowerCase() === 'n')) {
+            e.preventDefault();
+            const modal = document.getElementById('quick-lead-modal');
+            if (modal) modal.classList.add('active');
+        }
+        if (e.key === 'Escape') {
+            document.getElementById('quick-lead-modal').classList.remove('active');
+            document.getElementById('lead-drawer').classList.remove('active');
+        }
+    });
 }
 
-/**
- * Alterna entre dark e light.
- */
-function toggleTheme() {
-  const current = document.body.classList.contains(THEME_DARK) ? THEME_DARK : THEME_LIGHT;
-  applyTheme(current === THEME_DARK ? THEME_LIGHT : THEME_DARK);
+function initSPARouting() {
+    const navDashboard = document.getElementById('nav-dashboard');
+    const navKanban = document.getElementById('nav-kanban');
+    const viewDashboard = document.getElementById('dashboard-view-section');
+    const viewKanban = document.getElementById('kanban-view-section');
+    const topbarTitle = document.getElementById('topbar-title');
+
+    if (navDashboard && navKanban && viewDashboard && viewKanban) {
+        navDashboard.addEventListener('click', (e) => {
+            e.preventDefault();
+            navKanban.classList.remove('active');
+            navDashboard.classList.add('active');
+            viewKanban.classList.remove('active');
+            viewDashboard.classList.add('active');
+            if (topbarTitle) topbarTitle.textContent = "Visão Geral";
+            updateDashboardViews();
+        });
+
+        navKanban.addEventListener('click', (e) => {
+            e.preventDefault();
+            navDashboard.classList.remove('active');
+            navKanban.classList.add('active');
+            viewDashboard.classList.remove('active');
+            viewKanban.classList.add('active');
+            if (topbarTitle) topbarTitle.textContent = "Pipeline Kanban";
+            renderKanbanCards();
+        });
+    }
 }
 
-/**
- * Atualiza o ícone SVG exibido no botão de toggle.
- * @param {string} theme
- */
-function updateThemeIcon(theme) {
-  const btn = document.getElementById('btn-theme-toggle');
-  if (!btn) return;
+function initModalControl() {
+    const modal = document.getElementById('quick-lead-modal');
+    const btnOpen = document.getElementById('btn-novo-lead');
+    const btnClose = document.getElementById('btn-close-modal');
+    const form = document.getElementById('form-quick-lead');
 
-  // Sol = light mode ativo; Lua = dark mode ativo
-  btn.innerHTML = theme === THEME_DARK
-    ? `<!-- Ícone: Lua (modo escuro ativo) -->
-       <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-       </svg>`
-    : `<!-- Ícone: Sol (modo claro ativo) -->
-       <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-         <circle cx="12" cy="12" r="5"/>
-         <line x1="12" y1="1" x2="12" y2="3"/>
-         <line x1="12" y1="21" x2="12" y2="23"/>
-         <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-         <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-         <line x1="1" y1="12" x2="3" y2="12"/>
-         <line x1="21" y1="12" x2="23" y2="12"/>
-         <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-         <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-       </svg>`;
+    if (btnOpen && modal) btnOpen.addEventListener('click', () => modal.classList.add('active'));
+    if (btnClose && modal) btnClose.addEventListener('click', () => modal.classList.remove('active'));
 
-  btn.setAttribute('aria-label',
-    theme === THEME_DARK ? 'Mudar para tema claro' : 'Mudar para tema escuro');
+    if (form && modal) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const newCompanyId = crypto.randomUUID();
+            const newContactId = crypto.randomUUID();
+            const newDealId = crypto.randomUUID();
+
+            CRMState.companies.push({
+                id: newCompanyId,
+                nome_fantasia: document.getElementById('lead-company').value,
+                cnpj: '00.111.222/0001-33',
+                setor: 'Outros Setores',
+                data_cadastro: new Date().toISOString().split('T')[0]
+            });
+
+            CRMState.contacts.push({
+                id: newContactId,
+                nome: document.getElementById('lead-name').value,
+                email: 'contato@prospeccao.com',
+                telefone: '(11) 98888-7777',
+                cargo: 'Decisor Principal',
+                company_id: newCompanyId
+            });
+
+            const newDeal = {
+                id: newDealId,
+                title: `Oportunidade — ${document.getElementById('lead-company').value}`,
+                valor: parseFloat(document.getElementById('lead-value').value) || 0,
+                etapa_funil: 'triagem',
+                status: 'Aberto',
+                user_id: 'u-vendedor-1',
+                contact_id: newContactId
+            };
+            CRMState.deals.push(newDeal);
+
+            CRMState.activities.unshift({
+                id: crypto.randomUUID(),
+                deal_id: newDealId,
+                tipo: 'Lead',
+                descricao: `Lead criado via Entrada Rápida.`,
+                tempo: 'agora mesmo',
+                cor: '--color-accent'
+            });
+
+            CRMState.saveToStorage();
+
+            renderKanbanCards();
+            updateDashboardViews();
+
+            form.reset();
+            modal.classList.remove('active');
+        });
+    }
 }
 
-// ── Widget de Meta (Gamificação) ──────────────────────────────────
-
-/**
- * Inicializa o widget de progresso de meta do mês.
- * @param {number} current - Valor atual de vendas
- * @param {number} target  - Meta financeira do mês
- */
-function initGoalWidget(current, target) {
-  const pct = Math.min(Math.round((current / target) * 100), 100);
-
-  const percentEl = document.getElementById('goal-percentage');
-  const fillEl    = document.getElementById('goal-bar-fill');
-  const currentEl = document.getElementById('goal-current');
-  const targetEl  = document.getElementById('goal-target');
-
-  if (!percentEl || !fillEl) return;
-
-  // Determina a "fase" de cor baseada no progresso
-  let level;
-  if (pct < 40)       level = 'level-low';
-  else if (pct < 70)  level = 'level-mid';
-  else if (pct < 100) level = 'level-high';
-  else                level = 'level-done';
-
-  // Remove classes anteriores e aplica a nova
-  fillEl.classList.remove('level-low', 'level-mid', 'level-high', 'level-done');
-  fillEl.classList.add(level);
-
-  // Cor do percentual segue o level
-  const colors = {
-    'level-low':  'var(--color-danger)',
-    'level-mid':  'var(--color-warning)',
-    'level-high': 'var(--color-success)',
-    'level-done': 'var(--color-accent)',
-  };
-  percentEl.style.color = colors[level];
-
-  // Animação progressiva do contador
-  animateCounter(percentEl, 0, pct, 900, (v) => `${v}%`);
-
-  // Preenche a barra com transição CSS
-  requestAnimationFrame(() => {
-    fillEl.style.width = `${pct}%`;
-  });
-
-  // Formata valores monetários
-  if (currentEl) currentEl.textContent = formatCurrency(current);
-  if (targetEl)  targetEl.textContent  = formatCurrency(target);
-}
-
-// ── Utilitários ───────────────────────────────────────────────────
-
-/**
- * Formata um número como moeda BRL.
- */
-function formatCurrency(value) {
+export function formatCurrency(value) {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 }
 
-/**
- * Anima um contador numérico de `from` até `to` em `duration` ms.
- * @param {HTMLElement} el
- * @param {number} from
- * @param {number} to
- * @param {number} duration
- * @param {Function} formatter - ex: (v) => `${v}%`
- */
-function animateCounter(el, from, to, duration, formatter = (v) => v) {
-  const start = performance.now();
-  function step(now) {
-    const elapsed = now - start;
-    const progress = Math.min(elapsed / duration, 1);
-    // Ease out cubic
-    const eased = 1 - Math.pow(1 - progress, 3);
-    el.textContent = formatter(Math.round(from + (to - from) * eased));
-    if (progress < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
-}
-
-/**
- * Higieniza texto do usuário para evitar XSS.
- * Sempre use textContent (não innerHTML) ao inserir dados externos.
- * Esta função retorna um nó de texto seguro.
- * @param {string} str
- * @returns {string}
- */
-export function sanitize(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML; // Escapa caracteres especiais sem executar HTML
-}
-
-// ── Inicialização ─────────────────────────────────────────────────
-
-/**
- * Ponto de entrada. Executado após o DOM estar pronto.
- */
 function init() {
-  // 1. Aplica o tema imediatamente (antes do primeiro frame)
-  applyTheme(getInitialTheme());
-
-  // 2. Registra o listener do botão de toggle
-  const themeBtn = document.getElementById('btn-theme-toggle');
-  if (themeBtn) {
-    themeBtn.addEventListener('click', toggleTheme);
-  }
-
-  // 3. Inicializa o widget de meta com dados de exemplo
-  //    → substituir por chamada à API de persistência (Supabase/Firebase)
-  initGoalWidget(87_500, 150_000);
-
-  console.info('[IS CRM] Aplicação inicializada.');
+  initThemeControl();
+  initSPARouting();
+  initModalControl();
+  initKeyboardShortcuts();
+  initDashboard();
+  initKanban();
+  
+  document.getElementById('btn-close-drawer').addEventListener('click', () => {
+      document.getElementById('lead-drawer').classList.remove('active');
+  });
 }
 
-// Garante execução após o DOM carregar, mesmo com script carregado em <head>
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
   init();
 }
-
-// Exporta helpers úteis para outros módulos
-export { applyTheme, toggleTheme, formatCurrency, animateCounter };

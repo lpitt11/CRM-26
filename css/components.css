@@ -1,163 +1,130 @@
 /* css/components.css */
-/* Widget de Desempenho Gamificado */
-.gamified-widget {
-    background-color: var(--bg-card);
-    border: 1px solid var(--borda);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    transition: var(--transicao);
+
+/* Sistema de Views SPA */
+.spa-view {
+    display: none;
+    animation: fadeIn 200ms ease;
+}
+.spa-view.active {
+    display: block;
 }
 
-.widget-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.progress-container {
-    width: 100%;
-    height: 12px;
-    background-color: var(--bg-principal);
-    border-radius: 6px;
-    overflow: hidden;
-}
-
-.progress-bar {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, var(--cor-acao), var(--sucesso));
-    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Grid do Dashboard */
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 1.5rem;
-}
-
-.analytics-card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--borda);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    min-height: 300px;
-}
-
-/* Estrutura Kanban (CSS Grid Nativo) */
+/* Kanban Board Layout (CSS Grid) */
 .kanban-board {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+    gap: var(--space-4);
     align-items: start;
-    height: calc(100vh - 220px);
+    height: calc(100vh - 140px);
 }
 
 .kanban-column {
-    background-color: var(--bg-card);
-    border: 1px solid var(--borda);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     display: flex;
     flex-direction: column;
+    padding: var(--space-4);
     max-height: 100%;
-    padding: 1rem;
-    transition: var(--transicao);
+    transition: all var(--transition-fast);
+}
+
+.kanban-column.drag-over {
+    border-color: var(--color-accent);
+    background-color: var(--color-accent-soft);
 }
 
 .column-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid var(--bg-principal);
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-1);
 }
 
 .column-title {
     font-weight: 600;
-    font-size: 1rem;
+    color: var(--color-text-primary);
 }
 
 .column-counter {
-    font-size: 0.85rem;
-    color: var(--texto-secundario);
-    background-color: var(--bg-principal);
-    padding: 0.2rem 0.6rem;
-    border-radius: 20px;
+    background: var(--color-surface-alt);
+    color: var(--color-text-secondary);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+}
+
+.column-subval {
+    font-size: var(--text-xs);
+    color: var(--color-success);
+    font-weight: 600;
+    margin-bottom: var(--space-4);
 }
 
 .kanban-cards-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--space-3);
     overflow-y: auto;
-    flex-grow: 1;
-    min-height: 150px;
-    padding: 0.25rem;
+    min-height: 200px;
 }
 
-.kanban-column.drag-over {
-    border-color: var(--cor-acao);
-    background-color: rgba(0, 102, 255, 0.03);
-}
-
-/* Card do Lead */
+/* Cards do Kanban */
 .deal-card {
-    background-color: var(--bg-principal);
-    border: 1px solid var(--borda);
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    padding: 1rem;
+    padding: var(--space-4);
     cursor: grab;
-    transition: var(--transicao);
-    user-select: none;
+    transition: transform var(--transition-fast), border-color var(--transition-fast);
 }
 
-.deal-card:active {
-    cursor: grabbing;
+.deal-card:hover {
+    border-color: var(--color-accent);
 }
+
+.deal-card:active { cursor: grabbing; }
 
 .deal-card.dragging {
     opacity: 0.4;
-    border: 1px dashed var(--cor-acao);
+    border: 1px dashed var(--color-accent);
 }
 
 .deal-title {
+    font-size: var(--text-sm);
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-2);
 }
 
 .deal-info {
-    font-size: 0.85rem;
-    color: var(--texto-secundario);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 0.75rem;
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
 }
 
 .deal-value {
-    color: var(--sucesso);
+    color: var(--color-success);
     font-weight: 600;
 }
 
-/* Modais de Cadastro Rápido */
+/* Modal Overlay */
 .modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.6);
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 100;
+    z-index: 1000;
     opacity: 0;
     pointer-events: none;
-    transition: var(--transicao);
+    transition: opacity var(--transition-fast);
 }
 
 .modal-overlay.active {
@@ -166,97 +133,147 @@
 }
 
 .modal-box {
-    background-color: var(--bg-card);
-    border: 1px solid var(--borda);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     width: 100%;
-    max-width: 450px;
-    padding: 2rem;
-    transform: scale(0.95);
-    transition: var(--transicao);
-}
-
-.modal-overlay.active .modal-box {
-    transform: scale(1);
+    max-width: 460px;
+    padding: var(--space-6);
+    box-shadow: var(--shadow-modal);
 }
 
 .modal-title {
-    margin-bottom: 1.5rem;
-    font-weight: 600;
+    font-size: var(--text-lg);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-5);
 }
 
-.form-group {
-    margin-bottom: 1.25rem;
-}
+.form-group { margin-bottom: var(--space-4); }
 
 .form-group label {
     display: block;
-    font-size: 0.85rem;
-    color: var(--texto-secundario);
-    margin-bottom: 0.5rem;
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-2);
 }
 
 .form-control {
     width: 100%;
-    background-color: var(--bg-principal);
-    border: 1px solid var(--borda);
-    border-radius: var(--radius-md);
-    padding: 0.75rem 1rem;
-    color: var(--texto-primario);
-    font-size: 0.95rem;
-    transition: var(--transicao);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+    color: var(--color-text-primary);
+    font-family: inherit;
+    font-size: var(--text-sm);
 }
 
 .form-control:focus {
     outline: none;
-    border-color: var(--cor-acao);
+    border-color: var(--color-accent);
 }
 
 .modal-footer {
     display: flex;
     justify-content: flex-end;
-    gap: 0.75rem;
-    margin-top: 1.75rem;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
 }
 
 .btn {
-    padding: 0.65rem 1.25rem;
-    border-radius: var(--radius-md);
-    font-weight: 500;
-    cursor: pointer;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: 600;
     border: none;
-    font-size: 0.9rem;
-    transition: var(--transicao);
+    cursor: pointer;
 }
 
-.btn-secondary {
-    background-color: transparent;
-    color: var(--texto-secundario);
+.btn-secondary { color: var(--color-text-secondary); background: transparent; }
+.btn-secondary:hover { background: var(--color-surface-alt); }
+
+/* GAVETA LATERAL (DRAWER) OMNICHANNEL */
+.drawer-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1100;
+    display: flex;
+    justify-content: flex-end;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity var(--transition-base), visibility var(--transition-base);
 }
 
-.btn-secondary:hover {
-    background-color: var(--bg-principal);
+.drawer-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
 }
 
-.btn-primary {
-    background-color: var(--cor-acao);
-    color: #FFFFFF;
-}
-
-.btn-primary:hover {
-    background-color: var(--cor-acao-hover);
-}
-
-/* Linha do Tempo Omnichannel */
-.timeline-container {
+.drawer-box {
+    width: 100%;
+    max-width: 450px;
+    height: 100vh;
+    background: var(--color-surface);
+    border-left: 1px solid var(--color-border);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    margin-top: 1rem;
+    transform: translateX(100%);
+    transition: transform var(--transition-base) cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -4px 0 24px rgba(0,0,0,0.15);
 }
-.timeline-item {
-    padding: 0.75rem;
-    border-left: 2px solid var(--cor-acao);
-    background: var(--bg-principal);
-    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+
+.drawer-overlay.active .drawer-box {
+    transform: translateX(0);
+}
+
+.drawer-header {
+    padding: var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.drawer-header h3 { font-size: var(--text-base); font-weight: 600; color: var(--color-text-primary); }
+
+.btn-close-drawer {
+    background: none; border: none; font-size: var(--text-lg); color: var(--color-text-secondary); cursor: pointer;
+}
+
+.drawer-body {
+    padding: var(--space-5);
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.drawer-section h4 {
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: var(--space-1);
+    margin-bottom: var(--space-2);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+}
+
+.info-grid label { font-weight: 500; color: var(--color-text-secondary); }
+.info-grid span { color: var(--color-text-primary); font-weight: 600; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
 }
